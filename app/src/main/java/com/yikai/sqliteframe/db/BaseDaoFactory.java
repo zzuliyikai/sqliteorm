@@ -26,6 +26,7 @@ public class BaseDaoFactory {
     private BaseDaoFactory(){
         mPath = Environment.getDataDirectory().getAbsolutePath()+"yikai.db";
         mSqLiteDatabase = SQLiteDatabase.openOrCreateDatabase(mPath, null);
+
     }
 
 
