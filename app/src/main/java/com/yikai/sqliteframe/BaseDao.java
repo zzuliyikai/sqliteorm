@@ -6,6 +6,7 @@ import com.yikai.sqliteframe.annotation.DbField;
 import com.yikai.sqliteframe.annotation.DbTable;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 
 /**
  * Created by Administrator on 2019/4/8.
@@ -16,6 +17,7 @@ public class BaseDao<T> implements IBaseDao<T> {
     private Class<T> mEntityClass;
     private SQLiteDatabase mSqLiteDatabase;
     private String mTableName;
+    private HashMap<String,Field> hashMap;
 
 
     private boolean isInit = false;
@@ -24,6 +26,7 @@ public class BaseDao<T> implements IBaseDao<T> {
         if (!isInit) {
             this.mEntityClass = entityClass;
             this.mSqLiteDatabase = sqLiteDatabase;
+            hashMap = new HashMap<>();
 
             mTableName = mEntityClass.getAnnotation(DbTable.class).value();
 
@@ -35,6 +38,9 @@ public class BaseDao<T> implements IBaseDao<T> {
             if (!isCreateTable()) {
                 return false;
             }
+
+            //查看
+
 
             isInit = true;
         }
@@ -77,9 +83,8 @@ public class BaseDao<T> implements IBaseDao<T> {
                  */
                 continue;
             }
-
-
         }
+
 
 
         return false;
