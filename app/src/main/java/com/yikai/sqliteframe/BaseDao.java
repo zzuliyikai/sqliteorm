@@ -39,7 +39,7 @@ public class BaseDao<T> implements IBaseDao<T> {
                 return false;
             }
 
-            //查看
+            //查看数据库表
 
 
             isInit = true;
