@@ -24,38 +24,32 @@ public class BaseDaoFactory {
     private SQLiteDatabase mSqLiteDatabase;
 
     private BaseDaoFactory(){
-        mPath = Environment.getDataDirectory().getAbsolutePath()+"yikai.db";
+        mPath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/yikai.db";
         mSqLiteDatabase = SQLiteDatabase.openOrCreateDatabase(mPath, null);
 
     }
 
 
-    public synchronized <T extends BaseDao<M>,M> T getDataHlper(Class<T> entityDao,Class<M> entity){
+    public synchronized <M> BaseDao getDataHlper(Class<M> entity){
 
         //打开数据库
 
         BaseDao baseDao = null;
         try {
-            baseDao = entityDao.newInstance();
+            baseDao = new BaseDao();
             baseDao.init(entity,mSqLiteDatabase);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return (T) baseDao;
+        return  baseDao;
 
 
     }
 
 
-    public BaseDaoFactory getInstance(){
+    public static BaseDaoFactory getInstance(){
 
         return mBaseDaoFactory;
     }
-
-
-
-
 
 }

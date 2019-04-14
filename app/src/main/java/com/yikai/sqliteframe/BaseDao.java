@@ -1,19 +1,26 @@
 package com.yikai.sqliteframe;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.yikai.sqliteframe.annotation.DbField;
 import com.yikai.sqliteframe.annotation.DbTable;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Administrator on 2019/4/8.
  */
 
-public abstract class BaseDao<T> implements IBaseDao<T> {
+public class BaseDao<T> implements IBaseDao<T> {
 
     private Class<T> mEntityClass;
     private SQLiteDatabase mSqLiteDatabase;
@@ -23,6 +30,8 @@ public abstract class BaseDao<T> implements IBaseDao<T> {
 
 
     private boolean isInit = false;
+
+    private Map<String, Object> mHashMap;
 
     public synchronized boolean init(Class<T> entityClass, SQLiteDatabase sqLiteDatabase) {
         if (!isInit) {
@@ -59,7 +68,7 @@ public abstract class BaseDao<T> implements IBaseDao<T> {
         Cursor cursor = mSqLiteDatabase.rawQuery(sql, null);
 
         String[] columnNames = cursor.getColumnNames();
-        Field[] fields = mEntityClass.getFields();
+        Field[] fields = mEntityClass.getDeclaredFields();
 
         for (Field field : fields) {
             field.setAccessible(true);
@@ -95,10 +104,10 @@ public abstract class BaseDao<T> implements IBaseDao<T> {
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append("create table if not exists ");
         stringBuffer.append(mTableName + " (");
-        Field[] fields = mEntityClass.getFields();
+        Field[] fields = mEntityClass.getDeclaredFields();
 
         for (Field field : fields) {
-            Class<?> type = field.getType();
+            Class type = field.getType();
             if (type == String.class) {
                 String value = field.getAnnotation(DbField.class).value();
                 stringBuffer.append(value + " TEXT,");
@@ -142,7 +151,104 @@ public abstract class BaseDao<T> implements IBaseDao<T> {
     @Override
     public long insert(T entity) {
 
-        return 0;
+        Map<String, Object> map = getMap(entity);
+        ContentValues contentValues = getContentValues(map);
+        long insert = mSqLiteDatabase.insert(mTableName, null, contentValues);
+        return insert;
     }
 
+    @Override
+    public int delete(T entity) {
+        Map<String, Object> entityMap = getMap(entity);
+        String whereClause = getWhereClause(entityMap);
+        String[] whereArgs = getWhereArgs(entityMap);
+        int delete = mSqLiteDatabase.delete(mTableName, whereClause, whereArgs);
+        return delete;
+    }
+
+    @Override
+    public int update(T entity, T where) {
+
+        Map<String, Object> entityMap = getMap(entity);
+        ContentValues contentValues = getContentValues(entityMap);
+        Map<String, Object> whereMap = getMap(where);
+
+        String whereClause = getWhereClause(whereMap);
+        String[] whereArgs = getWhereArgs(whereMap);
+
+
+        int update = mSqLiteDatabase.update(mTableName, contentValues, whereClause, whereArgs);
+        return update;
+    }
+
+    private String[] getWhereArgs(Map<String, Object> whereMap) {
+
+        List<String> listWhereArgs = new ArrayList<>();
+        Set<Map.Entry<String, Object>> entries = whereMap.entrySet();
+        Iterator<Map.Entry<String, Object>> iterator = entries.iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> next = iterator.next();
+            if (next.getValue() != null) {
+                listWhereArgs.add((String) next.getValue());
+            }
+        }
+
+        return listWhereArgs.toArray(new String[listWhereArgs.size()]);
+
+
+    }
+
+    private String getWhereClause(Map<String, Object> whereMap) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("1=1");
+        Set<String> set = whereMap.keySet();
+        Iterator<String> iterator = set.iterator();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            if (key != null) {
+                stringBuilder.append(" and " + key + "=?");
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    private ContentValues getContentValues(Map<String, Object> map) {
+        ContentValues contentValues = new ContentValues();
+        Set<Map.Entry<String, Object>> entries = map.entrySet();
+        Iterator<Map.Entry<String, Object>> iterator = entries.iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> next = iterator.next();
+            String key = next.getKey();
+            Object value = next.getValue();
+            if (value instanceof String) {
+                contentValues.put(key, (String) value);
+            } else if (value instanceof Long) {
+                contentValues.put(key, (Long) value);
+            } else if (value instanceof Integer) {
+                contentValues.put(key, (Integer) value);
+            }
+        }
+        return contentValues;
+    }
+
+    private Map<String, Object> getMap(T entity) {
+        //获取entity里面的值并将值存到user对象中
+        Set<Map.Entry<String, Field>> entrieSet = mCacheMap.entrySet();
+        mHashMap = new HashMap<>();
+        Iterator<Map.Entry<String, Field>> iterator = entrieSet.iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Field> next = iterator.next();
+            String key = next.getKey();
+            Field filed = next.getValue();
+            try {
+                String value = (String) filed.get(entity);
+                if (value != null){
+                    mHashMap.put(key, value);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return mHashMap;
+    }
 }

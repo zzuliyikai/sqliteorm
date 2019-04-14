@@ -9,4 +9,9 @@ public interface IBaseDao<T> {
 
     long insert(T entity);
 
+    int delete(T entity);
+
+    int update(T entity,T where);
+
+
 }
