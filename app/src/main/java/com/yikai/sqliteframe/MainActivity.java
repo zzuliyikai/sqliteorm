@@ -22,6 +22,9 @@ public class MainActivity extends AppCompatActivity {
 
         mBaseDao = BaseDaoFactory.getInstance().getDataHlper(User.class);
 
+
+
+
     }
 
 

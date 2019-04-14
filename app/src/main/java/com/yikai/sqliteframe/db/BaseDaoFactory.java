@@ -30,10 +30,9 @@ public class BaseDaoFactory {
     }
 
 
-    public synchronized <M> BaseDao getDataHlper(Class<M> entity){
+    public synchronized BaseDao getDataHlper(Class entity){
 
         //打开数据库
-
         BaseDao baseDao = null;
         try {
             baseDao = new BaseDao();
@@ -42,8 +41,19 @@ public class BaseDaoFactory {
             e.printStackTrace();
         }
         return  baseDao;
+    }
 
+    public synchronized <T extends BaseDao<M>,M> T getDataHlper2(Class<T> entityDao,Class<M> entity){
 
+        //打开数据库
+        BaseDao baseDao = null;
+        try {
+            baseDao = entityDao.newInstance();
+            baseDao.init(entity,mSqLiteDatabase);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return (T) baseDao;
     }
 
 

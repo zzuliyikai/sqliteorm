@@ -56,7 +56,6 @@ public class BaseDao<T> implements IBaseDao<T> {
                 initCacheMap();
                 isInit = true;
             }
-
         }
         return isInit;
     }
