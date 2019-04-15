@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
 import com.yikai.sqliteframe.BaseDao;
-import com.yikai.sqliteframe.IBaseDao;
 
 /**
  * Created by 15738 on 2019/4/10.

@@ -23,9 +23,6 @@ public class MainActivity extends AppCompatActivity {
         mBaseDao = BaseDaoFactory.getInstance().getDataHlper(User.class);
 
 
-
-
-
     }
 
 
@@ -37,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void query(View view) {
+
+
+
     }
 
     public void delete(View view) {

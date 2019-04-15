@@ -180,6 +180,24 @@ public class BaseDao<T> implements IBaseDao<T> {
         return update;
     }
 
+    @Override
+    public List<T> query(T where) {
+
+        return query(where, null, null, null);
+    }
+
+    @Override
+    public List<T> query(T where, String selection, String[] selectionArgs, String limit) {
+
+        Cursor cursor = mSqLiteDatabase.query(mTableName, null, selection, selectionArgs, null, null, limit);
+
+
+        
+
+
+        return null;
+    }
+
     private String[] getWhereArgs(Map<String, Object> whereMap) {
 
         List<String> listWhereArgs = new ArrayList<>();
@@ -241,7 +259,7 @@ public class BaseDao<T> implements IBaseDao<T> {
             Field filed = next.getValue();
             try {
                 String value = (String) filed.get(entity);
-                if (value != null){
+                if (value != null) {
                     mHashMap.put(key, value);
                 }
             } catch (IllegalAccessException e) {
