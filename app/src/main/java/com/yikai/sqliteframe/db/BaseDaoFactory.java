@@ -3,8 +3,6 @@ package com.yikai.sqliteframe.db;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
-import com.yikai.sqliteframe.BaseDao;
-
 /**
  * Created by 15738 on 2019/4/10.
  */

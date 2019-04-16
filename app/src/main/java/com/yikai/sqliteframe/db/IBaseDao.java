@@ -1,4 +1,4 @@
-package com.yikai.sqliteframe;
+package com.yikai.sqliteframe.db;
 
 import java.util.List;
 
@@ -17,6 +17,6 @@ public interface IBaseDao<T> {
 
     List<T> query(T where);
 
-    List<T> query(T where,String selection,String[] selectionArgs,String limit);
+    List<T> query(T where,String orderBy, Integer startIndex, Integer limit);
 
 }

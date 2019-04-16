@@ -1,9 +1,9 @@
-package com.yikai.sqliteframe;
+package com.yikai.sqliteframe.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
+import android.text.TextUtils;
 
 import com.yikai.sqliteframe.annotation.DbField;
 import com.yikai.sqliteframe.annotation.DbTable;
@@ -37,6 +37,7 @@ public class BaseDao<T> implements IBaseDao<T> {
         if (!isInit) {
             this.mEntityClass = entityClass;
             this.mSqLiteDatabase = sqLiteDatabase;
+            mCacheMap = new HashMap<>();
 
             mTableName = mEntityClass.getAnnotation(DbTable.class).value();
 
@@ -49,15 +50,28 @@ public class BaseDao<T> implements IBaseDao<T> {
                 return false;
             }
 
-            //创建数据库表
-            if (isCreateTable()) {
-                mCacheMap = new HashMap<>();
-                //查看数据库表
+            if(!TextUtils.isEmpty(createTable()))
+            {
+                mSqLiteDatabase.execSQL(createTable());
+                //初始化
                 initCacheMap();
                 isInit = true;
+            } else {
+                //创建数据库表
+                if (isCreateTable()) {
+                    //查看数据库表
+                    initCacheMap();
+                    isInit = true;
+                }
             }
+
+
         }
         return isInit;
+    }
+
+    public String createTable(){
+        return null;
     }
 
     private void initCacheMap() {
@@ -187,15 +201,69 @@ public class BaseDao<T> implements IBaseDao<T> {
     }
 
     @Override
-    public List<T> query(T where, String selection, String[] selectionArgs, String limit) {
+    public List<T> query(T where, String orderBy, Integer startIndex, Integer limit) {
 
-        Cursor cursor = mSqLiteDatabase.query(mTableName, null, selection, selectionArgs, null, null, limit);
+        Map<String, Object> whereMap = getMap(where);
+        String whereClause = getWhereClause(whereMap);
+        String[] whereArgs = getWhereArgs(whereMap);
 
+        String limitString = null;
+        if (startIndex != null && limit != null) {
+            limitString = startIndex + " , " + limit;
+        }
 
-        
+        Cursor cursor = mSqLiteDatabase.query(mTableName, null, whereClause, whereArgs, null, null, orderBy, limitString);
 
+        List<T> resoultList = new ArrayList<>();
 
-        return null;
+        while (cursor.moveToNext()) {
+            try {
+                Object whereClass = where.getClass().newInstance();
+                Set<Map.Entry<String, Field>> entries = mCacheMap.entrySet();
+
+                Iterator<Map.Entry<String, Field>> iterator = entries.iterator();
+
+                while (iterator.hasNext()) {
+
+                    Map.Entry<String, Field> next = iterator.next();
+                    String column = next.getKey();
+                    int columnIndex = cursor.getColumnIndex(column);
+                    Field field = next.getValue();
+
+                    Class<?> declaringClass = field.getType();
+
+                    if (declaringClass == String.class) {
+                        field.set(whereClass, cursor.getString(columnIndex));
+
+                    } else if (declaringClass == Double.class) {
+                        field.set(whereClass, cursor.getDouble(columnIndex));
+
+                    } else if (declaringClass == Long.class) {
+                        field.set(whereClass, cursor.getLong(columnIndex));
+
+                    } else if (declaringClass == Integer.class) {
+                        field.set(whereClass, cursor.getInt(columnIndex));
+
+                    } else if (declaringClass == byte[].class) {
+                        field.set(whereClass, cursor.getBlob(columnIndex));
+
+                    } else {
+                        continue;
+                    }
+
+                }
+
+                resoultList.add((T) whereClass);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+        }
+
+        cursor.close();
+
+        return resoultList;
     }
 
     private String[] getWhereArgs(Map<String, Object> whereMap) {
@@ -243,6 +311,12 @@ public class BaseDao<T> implements IBaseDao<T> {
                 contentValues.put(key, (Long) value);
             } else if (value instanceof Integer) {
                 contentValues.put(key, (Integer) value);
+            } else if (value instanceof Double) {
+                contentValues.put(key, (Double) value);
+            } else if (value instanceof byte[]) {
+                contentValues.put(key, (Byte) value);
+            } else {
+                continue;
             }
         }
         return contentValues;
@@ -258,10 +332,44 @@ public class BaseDao<T> implements IBaseDao<T> {
             String key = next.getKey();
             Field filed = next.getValue();
             try {
-                String value = (String) filed.get(entity);
-                if (value != null) {
-                    mHashMap.put(key, value);
+
+                if (filed.get(entity) instanceof String) {
+                    String value = (String) filed.get(entity);
+                    if (value != null) {
+                        mHashMap.put(key, value);
+                    }
+                } else if (filed.get(entity) instanceof Double) {
+                    Double value = (Double) filed.get(entity);
+                    if (value != null) {
+                        mHashMap.put(key, value);
+                    }
+
+                } else if (filed.get(entity) instanceof Long) {
+
+                    Long value = (Long) filed.get(entity);
+                    if (value != null) {
+                        mHashMap.put(key, value);
+                    }
+
+                } else if (filed.get(entity) instanceof Integer) {
+
+                    Integer value = (Integer) filed.get(entity);
+                    if (value != null) {
+                        mHashMap.put(key, value);
+                    }
+
+                } else if (filed.get(entity) instanceof byte[]) {
+
+                    byte[] value = (byte[]) filed.get(entity);
+                    if (value != null) {
+                        mHashMap.put(key, value);
+                    }
+
+                } else {
+                    continue;
                 }
+
+
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
